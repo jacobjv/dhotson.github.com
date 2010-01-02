@@ -1,0 +1,62 @@
+<html>
+	<head>
+		<script>
+function load () {
+	var canvas = document.getElementById("canvas");
+	var ctx = canvas.getContext("2d");
+
+	var search = window.location.search.match(/\?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+	if (search) {
+		var a = parseFloat(search[1]);
+		var b = parseFloat(search[2]);
+		var c = parseFloat(search[3]);
+		var d = parseFloat(search[4]);
+		ctx.fillStyle = "rgba(0,0,0,0.01)"; // better quality with less noise for bookmarked attractors
+	}
+	else {
+		var a = Math.random() * 4 - 1;
+		var b = Math.random() * 4 - 1;
+		var c = Math.random() * 4 - 1;
+		var d = Math.random() * 4 - 1;
+		ctx.fillStyle = "rgba(0,0,0,0.1)"; // fast and noisy
+	}
+
+	var x = 0; var y = 0;
+
+	intervalId = setInterval(
+		function () {
+			for (var i=0; i<1000; i++) {
+				var nx = Math.sin(a * y) - Math.cos(b * x);
+				var ny = Math.sin(c * x) - Math.cos(d * y);
+
+				ctx.fillRect( (nx * 149) + 300, (ny * 149) + 300, 1, 1);
+
+				x = nx;
+				y = ny;
+			}
+		},
+		100
+	);
+
+	var link = document.getElementById('link');
+	link.innerHTML =
+		'<a href="?'+a+','+b+','+c+','+d+'" target="_blank">link</a></div>';
+
+	var stop = document.getElementById('stop');
+	stop.innerHTML =
+		'<a href="#" onclick="clearInterval('+intervalId+'); return false;">stop</a>';
+
+}
+		</script>
+	</head>
+	<body onload="load()">
+		<canvas id="canvas" width="600" height="600"></canvas>
+
+		<div style="font-family: Arial; font-size: 8px">
+		<div id="link">
+		</div>
+		<div id="stop">
+		</div>
+		</div>
+	</body>
+</html>
