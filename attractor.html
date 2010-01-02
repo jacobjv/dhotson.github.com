@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<script>
+function load () {
+	var canvas = document.getElementById("canvas");
+	var ctx = canvas.getContext("2d");
+	ctx.fillStyle = "rgba(0,0,0,0.01)";
+
+	var a = 1.14191403;
+	var b = -2.2841523;
+	var c = 2.4275403;
+	var d = -2.177196;
+
+	var x = 0; var y = 0;
+
+	setInterval(
+		function () {
+			for (var i=0; i<2000; i++) {
+				var nx = Math.sin(a * y) - Math.cos(b * x);
+				var ny = Math.sin(c * x) - Math.cos(d * y);
+
+				ctx.fillRect( (nx * 149) + 300, (ny * 149) + 300, 1, 1);
+
+				x = nx;
+				y = ny;
+			}
+		},
+		100
+	);
+}
+		</script>
+	</head>
+	<body onload="load()">
+		<canvas id="canvas" width="600" height="600"></canvas>
+	</body>
+</html>
