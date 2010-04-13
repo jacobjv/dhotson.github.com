@@ -44,38 +44,38 @@ Vector.prototype.normalise = function()
 };
 
 
-Point.points = [];
 function Point(position, mass)
 {
-	this.pos = position; // position
+	this.p = position; // position
 	this.m = mass; // mass
 	this.v = new Vector(0, 0); // velocity
 	this.f = new Vector(0, 0); // force
 
 	Point.points.push(this);
 }
+Point.points = [];
 
 Point.prototype.applyForce = function(force)
 {
-	this.f = this.f.add(force);
+	this.f = this.f.add(force.divide(this.m));
 };
 
 // points are slightly repulsed by other points
 Point.applyCoulombsLaw = function()
 {
-	var ke = 30.0; // repulsion constant
+	var ke = 100.0; // repulsion constant
 
-	Point.points.forEach(function(p1) {
-		Point.points.forEach(function(p2) {
-			if (p1 !== p2)
+	Point.points.forEach(function(point1) {
+		Point.points.forEach(function(point2) {
+			if (point1 !== point2)
 			{
-				var d = p1.pos.subtract(p2.pos);
+				var d = point1.p.subtract(point2.p);
 				var distance = d.magnitude() + 1.0;
 				var direction = d.normalise();
 
 				// apply force to each end point
-				p1.applyForce(direction.multiply(ke).divide(distance * distance * 0.5));
-				p2.applyForce(direction.multiply(ke).divide(distance * distance * -0.5));
+				point1.applyForce(direction.multiply(ke).divide(distance * distance * 0.5));
+				point2.applyForce(direction.multiply(ke).divide(distance * distance * -0.5));
 			}
 		});
 	});
@@ -85,8 +85,7 @@ Point.updateVelocity = function(timestep)
 {
 	var damping = 0.5; // damping constant, points lose velocity over time
 	Point.points.forEach(function(p) {
-		p.v = p.v.add(p.f.multiply(timestep));
-		p.v = p.v.multiply(damping);
+		p.v = p.v.add(p.f.multiply(timestep)).multiply(damping);
 		p.f = new Vector(0,0);
 	});
 };
@@ -94,7 +93,7 @@ Point.updateVelocity = function(timestep)
 Point.updatePosition = function(timestep)
 {
 	Point.points.forEach(function(p) {
-		p.pos = p.pos.add(p.v.multiply(timestep));
+		p.p = p.p.add(p.v.multiply(timestep));
 	});
 };
 
@@ -114,7 +113,7 @@ Spring.springs = [];
 Spring.applyHookesLaw = function()
 {
 	Spring.springs.forEach(function(s){
-		var d = s.point2.pos.subtract(s.point1.pos); // the direction of the spring
+		var d = s.point2.p.subtract(s.point1.p); // the direction of the spring
 		var displacement = s.length - d.magnitude();
 		var direction = d.normalise();
 
@@ -124,7 +123,7 @@ Spring.applyHookesLaw = function()
 	});
 };
 
-function start()
+function start(animIntervalId)
 {
 	var intervalId = setInterval(function() {
 		Point.applyCoulombsLaw();
@@ -143,8 +142,9 @@ function start()
 		if (k < 0.01)
 		{
 			clearInterval(intervalId);
+			clearInterval(animIntervalId);
 		}
-	}, 50);
+	}, 10);
 }
 </script>
 
@@ -154,19 +154,20 @@ function start()
 
 var width = 640;
 var height = 480;
+var zoom = 30;
 
 // convert point to screen coordinates
 Point.prototype.screenX = function() {
-	return this.pos.x * 30 + width/2.0;
-}
-Point.prototype.screenY = function() {
-	return this.pos.y * 30 + height/2.0;
-}
+	return this.p.x * zoom + width/2.0;
+};
 
+Point.prototype.screenY = function() {
+	return this.p.y * zoom + height/2.0;
+};
 
 var paper = Raphael(10, 50, 640, 480);
 
-var intervalId = setInterval(function() {
+var animIntervalId = setInterval(function() {
 	paper.clear();
 
 	Spring.springs.forEach(function(s){
@@ -174,16 +175,20 @@ var intervalId = setInterval(function() {
 			var y1 = Math.floor(s.point1.screenY());
 			var x2 = Math.floor(s.point2.screenX());
 			var y2 = Math.floor(s.point2.screenY());
-			paper.path(["M", x1, y1, "L", x2, y2]);
-
+			var c = paper.path(["M", x1, y1, "L", x2, y2]);
 	});
 
 	Point.points.forEach(function(p){
 		var c = paper.circle(p.screenX(), p.screenY(), 5);
 		c.attr("fill", "black");
+		c.hover(function (event) {
+			this.attr({r: "8"});
+		}, function (event) {
+			this.attr({r: "5"});
+		});
 	});
 
-}, 50);
+}, 10);
 
 
 
@@ -241,7 +246,7 @@ var s27 = new Spring(p11, p20, 1.0, 500.0);
 
 
 
-start();
+start(animIntervalId);
 
 
 </script>
