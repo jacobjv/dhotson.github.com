@@ -1,0 +1,216 @@
+<html>
+<body>
+<script src="raphael-min.js"></script>
+<script>
+function Vector(x, y)
+{
+	this.x = x;
+	this.y = y;
+}
+
+Vector.random = function()
+{
+	return new Vector(Math.random(),Math.random());
+}
+
+Vector.prototype.add = function(v2)
+{
+	return new Vector(this.x + v2.x, this.y + v2.y);
+};
+
+Vector.prototype.subtract = function(v2)
+{
+	return new Vector(this.x - v2.x, this.y - v2.y);
+};
+
+Vector.prototype.multiply = function(n)
+{
+	return new Vector(this.x * n, this.y * n);
+};
+
+Vector.prototype.divide = function(n)
+{
+	return new Vector(this.x / n, this.y / n);
+};
+
+Vector.prototype.magnitude = function()
+{
+	return Math.sqrt(this.x*this.x + this.y*this.y);
+};
+
+Vector.prototype.normalise = function()
+{
+	return this.divide(this.magnitude());
+};
+
+
+Point.points = [];
+function Point(position, mass)
+{
+	this.pos = position; // position
+	this.m = mass; // mass
+	this.v = new Vector(0, 0); // velocity
+	this.f = new Vector(0, 0); // force
+
+	Point.points.push(this);
+}
+
+Point.prototype.applyForce = function(force)
+{
+	this.f = this.f.add(force);
+};
+
+// points are slightly repulsed by other points
+Point.applyCoulombsLaw = function()
+{
+	var ke = 30.0; // repulsion constant
+
+	Point.points.forEach(function(p1) {
+		Point.points.forEach(function(p2) {
+			if (p1 !== p2)
+			{
+				var d = p1.pos.subtract(p2.pos);
+				var distance = d.magnitude();
+				var direction = d.normalise();
+
+				// apply force to each end point
+				p1.applyForce(direction.multiply(ke).divide(distance * distance * 0.5));
+				p2.applyForce(direction.multiply(ke).divide(distance * distance * -0.5));
+			}
+		});
+	});
+};
+
+Point.updateVelocity = function(timestep)
+{
+	var damping = 0.5; // damping constant, points lose velocity over time
+	Point.points.forEach(function(p) {
+		p.v = p.v.add(p.f.multiply(timestep));
+		p.v = p.v.multiply(damping);
+		p.f = new Vector(0,0);
+	});
+};
+
+Point.updatePosition = function(timestep)
+{
+	Point.points.forEach(function(p) {
+		p.pos = p.pos.add(p.v.multiply(timestep));
+	});
+};
+
+
+function Spring(point1, point2, length, k)
+{
+	this.point1 = point1;
+	this.point2 = point2;
+	this.length = length; // spring length at rest
+	this.k = k; // spring constant (See Hooke's law) .. how stiff the spring is
+
+	Spring.springs.push(this);
+}
+
+Spring.springs = [];
+
+Spring.applyHookesLaw = function()
+{
+	Spring.springs.forEach(function(s){
+		var d = s.point2.pos.subtract(s.point1.pos); // the direction of the spring
+		var displacement = s.length - d.magnitude();
+		var direction = d.normalise();
+
+		// apply force to each end point
+		s.point1.applyForce(direction.multiply(s.k * displacement * -0.5));
+		s.point2.applyForce(direction.multiply(s.k * displacement * 0.5));
+	});
+};
+
+function start()
+{
+	var intervalId = setInterval(function() {
+		Point.applyCoulombsLaw();
+		Spring.applyHookesLaw();
+		Point.updateVelocity(0.05);
+		Point.updatePosition(0.05);
+
+		// calculate kinetic energy of system
+		var k = 0.0;
+		Point.points.forEach(function(p){
+			var speed = p.v.magnitude();
+			k += speed * speed;;
+		});
+
+		// stop simulation when
+		if (k < 0.01)
+		{
+			clearInterval(intervalId);
+		}
+	}, 50);
+}
+</script>
+
+
+
+<script>
+
+var width = 640;
+var height = 480;
+
+// convert point to screen coordinates
+Point.prototype.screenX = function() {
+	return this.pos.x * 30 + width/2.0;
+}
+Point.prototype.screenY = function() {
+	return this.pos.y * 30 + height/2.0;
+}
+
+
+var paper = Raphael(10, 50, 640, 480);
+
+var intervalId = setInterval(function() {
+	paper.clear();
+
+	Spring.springs.forEach(function(s){
+			var x1 = Math.floor(s.point1.screenX());
+			var y1 = Math.floor(s.point1.screenY());
+			var x2 = Math.floor(s.point2.screenX());
+			var y2 = Math.floor(s.point2.screenY());
+			paper.path(["M", x1, y1, "L", x2, y2]);
+
+	});
+
+	Point.points.forEach(function(p){
+		var c = paper.circle(p.screenX(), p.screenY(), 5);
+		c.attr("fill", "black");
+	});
+
+}, 50);
+
+
+
+
+
+var p1 = new Point(Vector.random(), 1.0);
+var p2 = new Point(Vector.random(), 1.0);
+var p3 = new Point(Vector.random(), 1.0);
+var p4 = new Point(Vector.random(), 1.0);
+var p5 = new Point(Vector.random(), 1.0);
+var p6 = new Point(Vector.random(), 1.0);
+var p7 = new Point(Vector.random(), 1.0);
+var p8 = new Point(Vector.random(), 1.0);
+
+
+var s1 = new Spring(p1, p2, 1.0, 500.0);
+var s2 = new Spring(p2, p3, 1.0, 500.0);
+var s3 = new Spring(p3, p1, 1.0, 500.0);
+var s4 = new Spring(p3, p4, 1.0, 500.0);
+var s5 = new Spring(p4, p5, 1.0, 500.0);
+var s6 = new Spring(p4, p6, 1.0, 500.0);
+var s7 = new Spring(p3, p7, 1.0, 500.0);
+var s8 = new Spring(p1, p8, 1.0, 500.0);
+
+start();
+
+
+</script>
+</body>
+</html>
