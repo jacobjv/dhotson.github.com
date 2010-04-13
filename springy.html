@@ -70,7 +70,7 @@ Point.applyCoulombsLaw = function()
 			if (p1 !== p2)
 			{
 				var d = p1.pos.subtract(p2.pos);
-				var distance = d.magnitude();
+				var distance = d.magnitude() + 1.0;
 				var direction = d.normalise();
 
 				// apply force to each end point
