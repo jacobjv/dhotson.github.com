@@ -83,7 +83,7 @@ var paper = Raphael(10, 10, width, height);
 var layout = new Layout.ForceDirected(graph, 500.0, 300.0, 0.5);
 
 var boxWidth = 60;
-var boxHeight = 24;
+var boxHeight = 20;
 
 var renderer = new Renderer(10, layout,
 	function clear()
@@ -91,6 +91,7 @@ var renderer = new Renderer(10, layout,
 		paper.clear();
 		var r = paper.rect(0,0,width-1,height-1);
 		r.attr("fill", "#FFFFFF");
+		r.attr("stroke", "none");
 	},
 	function drawEdge(edge, p1, p2)
 	{
@@ -99,7 +100,7 @@ var renderer = new Renderer(10, layout,
 		var x2 = Math.floor(toScreen(p2).x);
 		var y2 = Math.floor(toScreen(p2).y);
 		var c = paper.path(["M", x1, y1, "L", x2, y2]);
-		c.attr("stroke-width", 0.5);
+		c.attr("stroke-width", 1.0);
 
 
 		var point = intersect_line_box(toScreen(p1), toScreen(p2), {x: x2-boxWidth/2.0, y: y2-boxHeight/2.0}, boxWidth, boxHeight);
@@ -107,10 +108,9 @@ var renderer = new Renderer(10, layout,
 		var y = point.y;
 
 		var arrow = paper.path(["M", -7, 2, "L", 0, 0, "L", 7, 0, "L", 0, 0, "L", -7, -2, "L", "z"]);
-		arrow.attr("fill", "black");
-		arrow.rotate(Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI));
+		arrow.rotate(Math.atan2(y2 - y1, x2 - x1) * (180.0 / Math.PI));
 		arrow.translate(x, y);
-
+		arrow.attr("fill", "black");
 	},
 	function drawNode(node, p)
 	{
@@ -210,25 +210,13 @@ function intersect_line_box(p1, p2, p3, w, h)
 	var bl = {x: p3.x, y: p3.y + h};
 	var br = {x: p3.x + w, y: p3.y + h};
 
-	var results = [
-		intersect_line_line(p1, p2, tl, tr), // top
-		intersect_line_line(p1, p2, tr, br), // right
-		intersect_line_line(p1, p2, br, bl), // bottom
-		intersect_line_line(p1, p2, bl, tl) // left
-	];
+	var result;
+	if (result = intersect_line_line(p1, p2, tl, tr)) { return result; } // top
+	if (result = intersect_line_line(p1, p2, tr, br)) { return result; } // right
+	if (result = intersect_line_line(p1, p2, br, bl)) { return result; } // bottom
+	if (result = intersect_line_line(p1, p2, bl, tl)) { return result; } // left
 
-	var min = {point: false, min: false};
-	results.forEach(function(r){
-		if (r) {
-			var dist = Math.sqrt((r.x - p1.x)*(r.x - p1.x) + (r.y - p1.y)*(r.y - p1.y));
-			if (min.min === false || dist < min.min) {
-				min = {point: r, min: dist};
-			}
-		}
-		return min.point;
-	});
-
-	return min.point;
+	return false;
 }
 
 
