@@ -12,7 +12,7 @@ var graph = new Graph();
 var n1 = graph.newNode({label: "1"});
 var n2 = graph.newNode({label: "2"});
 var n3 = graph.newNode({label: "3"});
-var n4 = graph.newNode({label: "4", mass: 10.0});
+var n4 = graph.newNode({label: "4"});
 var n5 = graph.newNode({label: "5"});
 var n6 = graph.newNode({label: "6", fill: '#EEF'});
 var n7 = graph.newNode({label: "7"});
@@ -27,7 +27,7 @@ var n15 = graph.newNode({label: "15"});
 
 var e1 = graph.newEdge(n1, n2);
 var e2 = graph.newEdge(n2, n3);
-var e3 = graph.newEdge(n3, n4, {length: 4.0});
+var e3 = graph.newEdge(n3, n4);
 var e4 = graph.newEdge(n4, n1);
 var e5 = graph.newEdge(n3, n5);
 var e6 = graph.newEdge(n4, n5);
@@ -80,10 +80,10 @@ fromScreen = function(s) {
 
 var paper = Raphael(10, 10, width, height);
 
-var layout = new Layout.ForceDirected(graph, 500.0, 250.0, 0.5);
+var layout = new Layout.ForceDirected(graph, 500.0, 300.0, 0.5);
 
-var boxWidth = 70;
-var boxHeight = 32;
+var boxWidth = 60;
+var boxHeight = 24;
 
 var renderer = new Renderer(10, layout,
 	function clear()
@@ -99,12 +99,14 @@ var renderer = new Renderer(10, layout,
 		var x2 = Math.floor(toScreen(p2).x);
 		var y2 = Math.floor(toScreen(p2).y);
 		var c = paper.path(["M", x1, y1, "L", x2, y2]);
-		c.attr("stroke-width", 0.75);
+		c.attr("stroke-width", 0.5);
 
 
-		var x = (x2 - x1) * 0.8 + x1;
-		var y = (y2 - y1) * 0.8 + y1;
-		var arrow = paper.path(["M", -5, 3, "L", 5, 0, "L", -5, -3, "L", -3, 0, "z"]);
+		var point = intersect_line_box(toScreen(p1), toScreen(p2), {x: x2-boxWidth/2.0, y: y2-boxHeight/2.0}, boxWidth, boxHeight);
+		var x = point.x;
+		var y = point.y;
+
+		var arrow = paper.path(["M", -7, 2, "L", 0, 0, "L", 7, 0, "L", 0, 0, "L", -7, -2, "L", "z"]);
 		arrow.attr("fill", "black");
 		arrow.rotate(Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI));
 		arrow.translate(x, y);
@@ -116,8 +118,9 @@ var renderer = new Renderer(10, layout,
 		var fill = typeof(node.data.fill) !== 'undefined' ? node.data.fill : "#FFFFFF";
 
 		var s = toScreen(p);
-		var rect = paper.rect(s.x - boxWidth/2.0, s.y - boxHeight/2.0, boxWidth, boxHeight, 10);
+		var rect = paper.rect(s.x - boxWidth/2.0, s.y - boxHeight/2.0, boxWidth, boxHeight, 3);
 		rect.attr("fill", fill);
+		rect.attr("stroke-width", 1.0);
 
 		if (typeof(node.data.label) !== 'undefined')
 		{
@@ -178,46 +181,55 @@ jQuery(window).bind('mouseup',function(e){
 });
 
 
-function intersect_line_box(p1, p2, p3, w, h)
-{
-	var tl = p3;
-	var tr = {x: p3.x + w, y: p3.y};
-	var bl = {x: p3.x, y: p3.y + h};
-	var br = {x: p3.x + w, y: p3.y + h};
-
-	var result;
-	result = result || intersect_line_line(p1, p2, tl, tr);
-	result = result || intersect_line_line(p1, p2, tr, br);
-	result = result || intersect_line_line(p1, p2, br, bl);
-	result = result || intersect_line_line(p1, p2, bl, tl);
-	return result;
-}
-
 function intersect_line_line(p1, p2, p3, p4)
 {
 	var denom = ((p4.y - p3.y)*(p2.x - p1.x) - (p4.x - p3.x)*(p2.y - p1.y));
 
-	// lines are parellel
-	if (denom === 0)
+	// lines are parallel
+	if (denom === 0) {
 		return false;
+	}
 
-	var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x))
-		/ denom;
+	var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / denom;
+	var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x)) / denom;
 
-	var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x))
-		/ denom;
-
-	if (ua < 0 || ua > 1 || ub < 0 || ub > 1)
+	if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
 		return false;
+	}
 
 	return {
 		x: p1.x + ua * (p2.x - p1.x),
 		y: p1.y + ua * (p2.y - p1.y)
-	}
-
-
+	};
 }
 
+function intersect_line_box(p1, p2, p3, w, h)
+{
+	var tl = {x: p3.x, y: p3.y};
+	var tr = {x: p3.x + w, y: p3.y};
+	var bl = {x: p3.x, y: p3.y + h};
+	var br = {x: p3.x + w, y: p3.y + h};
+
+	var results = [
+		intersect_line_line(p1, p2, tl, tr), // top
+		intersect_line_line(p1, p2, tr, br), // right
+		intersect_line_line(p1, p2, br, bl), // bottom
+		intersect_line_line(p1, p2, bl, tl) // left
+	];
+
+	var min = {point: false, min: false};
+	results.forEach(function(r){
+		if (r) {
+			var dist = Math.sqrt((r.x - p1.x)*(r.x - p1.x) + (r.y - p1.y)*(r.y - p1.y));
+			if (min.min === false || dist < min.min) {
+				min = {point: r, min: dist};
+			}
+		}
+		return min.point;
+	});
+
+	return min.point;
+}
 
 
 </script>
