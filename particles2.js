@@ -109,11 +109,7 @@ function start()
 		Point.updatePosition(0.05);
 	}, 10);
 }
-</script>
 
-
-
-<script>
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
