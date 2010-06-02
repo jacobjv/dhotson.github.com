@@ -80,6 +80,7 @@ h1 {
 	color: #FFFFFF;
 	font-family: ArcherLightItalic;
 	font-size: 100px;
+	font-weight: normal;
 	text-shadow: 1px 1px 1px #000000;
 }
 
@@ -115,6 +116,10 @@ a:hover {
 
 		<script>
 		jQuery(document).ready(function () {
+			// check for canvas support.. see: http://diveintohtml5.org/detect.html#canvas
+			if (!!!document.createElement('canvas').getContext) {
+				return;
+			}
 			/* Make some noise.. */
 			var canvas = document.createElement("canvas");
 			canvas.width = 100;
