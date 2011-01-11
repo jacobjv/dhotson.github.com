@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <!DOCTYPE MODE SYSTEM "xmode.dtd">
 
-<!-- CoffeeScript mode by Dennis Hotson -->
+<!-- CoffeeScript mode by Dennis Hotson
+Also, contributions by: Balazs Toth
+-->
 <MODE>
 	<PROPS>
 		<PROPERTY NAME="lineComment" VALUE="#" />
@@ -29,6 +31,11 @@
 		<SPAN TYPE="LITERAL2" NO_LINE_BREAK="FALSE" ESCAPE="\">
 			<BEGIN>'</BEGIN>
 			<END>'</END>
+		</SPAN>
+
+		<SPAN TYPE="LITERAL1" NO_LINE_BREAK="FALSE" ESCAPE="\">
+			<BEGIN>"""</BEGIN>
+			<END>"""</END>
 		</SPAN>
 
 		<SPAN TYPE="LITERAL2" NO_LINE_BREAK="FALSE" ESCAPE="\">
