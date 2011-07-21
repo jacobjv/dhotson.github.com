@@ -42,7 +42,7 @@ body {
 
 .marker .inner {
 	position: relative;
-	bottom: 25px;
+	bottom: 32px;
 	left: -50%;
 	/*
 }
@@ -72,8 +72,8 @@ body {
 }
 
 .marker .content {
-	height: 25px;
-	width: 25px;
+	height: 32px;
+	width: 32px;
 }
 
 .marker .content img {
