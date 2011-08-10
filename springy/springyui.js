@@ -25,17 +25,36 @@ Copyright (c) 2010 Dennis Hotson
 
 (function() {
 
-jQuery.fn.springy = function(graph) {
+jQuery.fn.springy = function(params) {
+    var graph = params.graph;
+    if(!graph){
+        return;
+    }
+    
+    var stiffness = params.stiffness || 400.0;
+    var repulsion = params.repulsion || 400.0;
+    var damping = params.damping || 0.5;
+
 	var canvas = this[0];
 	var ctx = canvas.getContext("2d");
-	var layout = new Layout.ForceDirected(graph, 400.0, 400.0, 0.5);
+	var layout = new Layout.ForceDirected(graph, stiffness, repulsion, damping);
+
+	var requestAnimFrame =
+		window.requestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.oRequestAnimationFrame ||
+		window.msRequestAnimationFrame ||
+		function(callback, element) {
+			window.setTimeout(callback, 10);
+		};
 
 	// calculate bounding box of graph layout.. with ease-in
 	var currentBB = layout.getBoundingBox();
 	var targetBB = {bottomleft: new Vector(-2, -2), topright: new Vector(2, 2)};
 
 	// auto adjusting bounding box
-	setInterval(function(){
+	requestAnimFrame(function adjust(){
 		targetBB = layout.getBoundingBox();
 		// current gets 20% closer to target every iteration
 		currentBB = {
@@ -44,7 +63,9 @@ jQuery.fn.springy = function(graph) {
 			topright: currentBB.topright.add( targetBB.topright.subtract(currentBB.topright)
 				.divide(10))
 		};
-	}, 50);
+
+		requestAnimFrame(adjust);
+	});
 
 	// convert to/from screen coordinates
 	toScreen = function(p) {
@@ -100,11 +121,18 @@ jQuery.fn.springy = function(graph) {
 	});
 
 	Node.prototype.getWidth = function() {
-		ctx.save();
 		var text = typeof(this.data.label) !== 'undefined' ? this.data.label : this.id;
-		ctx.font = "16px Verdana";
+		if (this._width && this._width[text])
+			return this._width[text];
+
+		ctx.save();
+		ctx.font = "16px Verdana, sans-serif";
 		var width = ctx.measureText(text).width + 10;
 		ctx.restore();
+
+		this._width || (this._width = {});
+		this._width[text] = width;
+
 		return width;
 	};
 
@@ -237,9 +265,9 @@ jQuery.fn.springy = function(graph) {
 
 			ctx.textAlign = "left";
 			ctx.textBaseline = "top";
-			ctx.font = "16px Verdana";
+			ctx.font = "16px Verdana, sans-serif";
 			ctx.fillStyle = "#000000";
-			ctx.font = "16px Verdana";
+			ctx.font = "16px Verdana, sans-serif";
 			var text = typeof(node.data.label) !== 'undefined' ? node.data.label : node.id;
 			ctx.fillText(text, s.x - boxWidth/2 + 5, s.y - 8);
 

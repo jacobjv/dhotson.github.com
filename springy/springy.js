@@ -196,7 +196,7 @@ Graph.prototype.merge = function(data)
 {
 	var nodes = [];
 	data.nodes.forEach(function(n) {
-		nodes.push(graph.addNode(new Node(n.id, n.data)));
+		nodes.push(this.addNode(new Node(n.id, n.data)));
 	}, this);
 
 	data.edges.forEach(function(e) {
@@ -209,7 +209,7 @@ Graph.prototype.merge = function(data)
 				? e.type + "-" + from.id + "-" + to.id
 				: e.type + "-" + to.id + "-" + from.id;
 
-		var edge = graph.addEdge(new Edge(id, from, to, e.data));
+		var edge = this.addEdge(new Edge(id, from, to, e.data));
 		edge.data.type = e.type;
 	}, this);
 };
@@ -418,7 +418,17 @@ Layout.ForceDirected.prototype.start = function(interval, render, done)
 		return; // already running
 	}
 
-	this.intervalId = setInterval(function() {
+	var requestAnimFrame =
+		window.requestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.oRequestAnimationFrame ||
+		window.msRequestAnimationFrame ||
+		function(callback, element) {
+			window.setTimeout(callback, interval);
+		};
+
+	requestAnimFrame(function step() {
 		t.applyCoulombsLaw();
 		t.applyHookesLaw();
 		t.attractToCentre();
@@ -428,13 +438,15 @@ Layout.ForceDirected.prototype.start = function(interval, render, done)
 		if (typeof(render) !== 'undefined') { render(); }
 
 		// stop simulation when energy of the system goes below a threshold
-		if (t.totalEnergy() < 0.1)
+		if (t.totalEnergy() < 0.01)
 		{
-			clearInterval(t.intervalId);
-			t.intervalId = null;
 			if (typeof(done) !== 'undefined') { done(); }
 		}
-	}, interval);
+		else
+		{
+			requestAnimFrame(step);
+		}
+	});
 };
 
 // Find the nearest point to a particular position
